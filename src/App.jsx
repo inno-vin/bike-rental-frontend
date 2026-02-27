@@ -1,4 +1,3 @@
-import API from "./api";
 import { setTokens } from "./auth";
 
 const testLogin = async () => {
@@ -8,7 +7,7 @@ const testLogin = async () => {
       password: "admin123",
     });
 
-    setTokens(response.data);
+    setTokens(response.data);   // 🔥 THIS IS THE IMPORTANT LINE
     console.log("Logged in successfully");
   } catch (error) {
     console.error(error);
