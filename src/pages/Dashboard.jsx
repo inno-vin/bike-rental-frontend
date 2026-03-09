@@ -3,52 +3,83 @@ import API from "../api";
 
 function Dashboard() {
   const [bikes, setBikes] = useState([]);
-
-  useEffect(() => {
-    fetchBikes();
-  }, []);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   const fetchBikes = async () => {
     try {
       const response = await API.get("/api/bikes/");
       setBikes(response.data);
     } catch (error) {
-      console.error("Error fetching bikes:", error);
+      console.error(error);
     }
   };
 
-  const bookBike = async (bikeId) => {
-    try {
-      const startDate = prompt("Enter start date (YYYY-MM-DD)");
-      const endDate = prompt("Enter end date (YYYY-MM-DD)");
+  useEffect(() => {
+    fetchBikes();
+  }, []);
 
+  const bookBike = async (bikeId) => {
+    if (!startDate || !endDate) {
+      alert("Please select dates");
+      return;
+    }
+
+    try {
       await API.post("/api/bookings/", {
         bike: bikeId,
         start_date: startDate,
         end_date: endDate,
       });
 
-      alert("Bike booked successfully!");
+      alert("Bike booked successfully");
+
+      fetchBikes();
     } catch (error) {
-      console.error("Booking error:", error.response?.data || error);
+      console.error(error.response);
       alert("Booking failed");
     }
   };
 
-  return (
-    <div>
-      <h2>Dashboard</h2>
+  const logout = () => {
+    localStorage.removeItem("access");
+    localStorage.removeItem("refresh");
+    window.location.href = "/";
+  };
 
-      {bikes.length === 0 ? (
-        <p>No bikes available</p>
-      ) : (
-        bikes.map((bike) => (
+  return (
+    <div style={{ padding: "40px" }}>
+      <h1>Dashboard</h1>
+
+      <button onClick={logout} style={{ marginBottom: "20px" }}>
+        Logout
+      </button>
+
+      <div style={{ marginBottom: "30px" }}>
+        <h3>Select Booking Dates</h3>
+
+        <input
+          type="date"
+          value={startDate}
+          onChange={(e) => setStartDate(e.target.value)}
+        />
+
+        <input
+          type="date"
+          value={endDate}
+          onChange={(e) => setEndDate(e.target.value)}
+          style={{ marginLeft: "10px" }}
+        />
+      </div>
+
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "20px" }}>
+        {bikes.map((bike) => (
           <div
             key={bike.id}
             style={{
               border: "1px solid white",
-              padding: "10px",
-              margin: "10px",
+              padding: "20px",
+              width: "260px",
             }}
           >
             <h3>{bike.title}</h3>
@@ -57,16 +88,20 @@ function Dashboard() {
 
             <p>Price per day: ₹{bike.price_per_day}</p>
 
-            <p>Status: {bike.available ? "Available" : "Not Available"}</p>
+            {bike.available ? (
+              <>
+                <p style={{ color: "lightgreen" }}>Status: Available</p>
 
-            {bike.available && (
-              <button onClick={() => bookBike(bike.id)}>
-                Book Bike
-              </button>
+                <button onClick={() => bookBike(bike.id)}>
+                  Book Bike
+                </button>
+              </>
+            ) : (
+              <p style={{ color: "red" }}>Status: Not Available</p>
             )}
           </div>
-        ))
-      )}
+        ))}
+      </div>
     </div>
   );
 }
