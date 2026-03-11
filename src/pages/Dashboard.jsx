@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import API from "../api";
 
 function Dashboard() {
@@ -7,24 +7,23 @@ function Dashboard() {
   const [endDate, setEndDate] = useState("");
 
   const fetchBikes = async () => {
+    if (!startDate || !endDate) {
+      alert("Please select dates first");
+      return;
+    }
+
     try {
-      const response = await API.get("/api/bikes/");
+      const response = await API.get(
+        `/api/bikes/?start_date=${startDate}&end_date=${endDate}`
+      );
+
       setBikes(response.data);
     } catch (error) {
       console.error(error);
     }
   };
 
-  useEffect(() => {
-    fetchBikes();
-  }, []);
-
   const bookBike = async (bikeId) => {
-    if (!startDate || !endDate) {
-      alert("Please select dates");
-      return;
-    }
-
     try {
       await API.post("/api/bookings/", {
         bike: bikeId,
@@ -34,7 +33,7 @@ function Dashboard() {
 
       alert("Bike booked successfully");
 
-      fetchBikes();
+      fetchBikes(); // refresh list
     } catch (error) {
       console.error(error.response);
       alert("Booking failed");
@@ -70,38 +69,53 @@ function Dashboard() {
           onChange={(e) => setEndDate(e.target.value)}
           style={{ marginLeft: "10px" }}
         />
+
+        <button
+          onClick={fetchBikes}
+          style={{ marginLeft: "15px" }}
+        >
+          Search Bikes
+        </button>
       </div>
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "20px" }}>
-        {bikes.map((bike) => (
-          <div
-            key={bike.id}
-            style={{
-              border: "1px solid white",
-              padding: "20px",
-              width: "260px",
-            }}
-          >
-            <h3>{bike.title}</h3>
+      {bikes.length === 0 ? (
+        <p>No bikes found for selected dates</p>
+      ) : (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "20px" }}>
+          {bikes.map((bike) => (
+            <div
+              key={bike.id}
+              style={{
+                border: "1px solid white",
+                padding: "20px",
+                width: "260px",
+              }}
+            >
+              <h3>{bike.title}</h3>
 
-            <p>Location: {bike.location}</p>
+              <p>Location: {bike.location}</p>
 
-            <p>Price per day: ₹{bike.price_per_day}</p>
+              <p>Price per day: ₹{bike.price_per_day}</p>
 
-            {bike.available ? (
-              <>
-                <p style={{ color: "lightgreen" }}>Status: Available</p>
+              {bike.available ? (
+                <>
+                  <p style={{ color: "lightgreen" }}>
+                    Status: Available
+                  </p>
 
-                <button onClick={() => bookBike(bike.id)}>
-                  Book Bike
-                </button>
-              </>
-            ) : (
-              <p style={{ color: "red" }}>Status: Not Available</p>
-            )}
-          </div>
-        ))}
-      </div>
+                  <button onClick={() => bookBike(bike.id)}>
+                    Book Bike
+                  </button>
+                </>
+              ) : (
+                <p style={{ color: "red" }}>
+                  Status: Not Available
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
