@@ -6,6 +6,12 @@ function Dashboard() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
+  // ✅ ADD THIS FUNCTION (date formatter)
+  const formatDate = (date) => {
+    const d = new Date(date);
+    return d.toISOString().split("T")[0]; // YYYY-MM-DD
+  };
+
   const fetchBikes = async () => {
     if (!startDate || !endDate) {
       alert("Please select dates first");
@@ -14,12 +20,13 @@ function Dashboard() {
 
     try {
       const response = await API.get(
-        `/api/bikes/?start_date=${startDate}&end_date=${endDate}`
+        `/api/bikes/?start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`
       );
 
       setBikes(response.data);
     } catch (error) {
       console.error(error);
+      alert("Error fetching bikes");
     }
   };
 
@@ -27,8 +34,8 @@ function Dashboard() {
     try {
       await API.post("/api/bookings/", {
         bike: bikeId,
-        start_date: startDate,
-        end_date: endDate,
+        start_date: formatDate(startDate),
+        end_date: formatDate(endDate),
       });
 
       alert("Bike booked successfully");
@@ -70,16 +77,13 @@ function Dashboard() {
           style={{ marginLeft: "10px" }}
         />
 
-        <button
-          onClick={fetchBikes}
-          style={{ marginLeft: "15px" }}
-        >
+        <button onClick={fetchBikes} style={{ marginLeft: "15px" }}>
           Search Bikes
         </button>
       </div>
 
       {bikes.length === 0 ? (
-        <p>No bikes found for selected dates</p>
+        <p>No bikes available for selected dates</p>
       ) : (
         <div style={{ display: "flex", flexWrap: "wrap", gap: "20px" }}>
           {bikes.map((bike) => (
@@ -97,21 +101,10 @@ function Dashboard() {
 
               <p>Price per day: ₹{bike.price_per_day}</p>
 
-              {bike.available ? (
-                <>
-                  <p style={{ color: "lightgreen" }}>
-                    Status: Available
-                  </p>
-
-                  <button onClick={() => bookBike(bike.id)}>
-                    Book Bike
-                  </button>
-                </>
-              ) : (
-                <p style={{ color: "red" }}>
-                  Status: Not Available
-                </p>
-              )}
+              {/* ✅ SIMPLIFIED — no need for available check */}
+              <button onClick={() => bookBike(bike.id)}>
+                Book Bike
+              </button>
             </div>
           ))}
         </div>
